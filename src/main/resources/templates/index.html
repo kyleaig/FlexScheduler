@@ -1,9 +1,18 @@
-<html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-	<title>Index</title>
+<title>Index</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
-	<p>Welcome to an unfinished web application</p>
+	<p
+		th:text="'Hello, ' + ${name} + '. Welcome to an unfinished web application'" />
 	<a href="/doc/index.html">Calendar Documentation</a>
+	<table style="border: 1px solid black">
+		<th th:attr="colspan=${cal.getWeek().size()}" th:text="${cal.getName()}" />
+		<tr>
+			<td th:each="day : ${cal.getWeek()}" th:text="${day.toString()}" />
+		</tr>
+	</table>
 </body>
 </html>
