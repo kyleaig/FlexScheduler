@@ -1,0 +1,61 @@
+body {
+	font-family: Calibri, Verdana;
+	color: black;
+	margin: 0;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+table, th, tr, td {
+	border: 1px solid black;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+#cal_container {
+	width: 100%;
+	table-layout: fixed;
+	margin: 0;
+}
+
+#cal_container td:hover {
+	background-color: #999FFF;
+}
+
+#emp_container {
+	height: 30px;
+	width: 100%;
+	background-color: gray;
+	padding: 10px;
+	overflow-x: auto;
+}
+
+#emp_icon {
+	
+}
+
+
+#stats_container {
+	height: 70px;
+	width: 100%;
+	background-color: gray;
+	padding: 10px;
+	overflow-x: auto;
+}
+
+::selection {
+	background-color: Transparent;
+}
+
+::-moz-selection {
+	background-color: Transparent;
+}

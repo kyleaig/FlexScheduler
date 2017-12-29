@@ -1,0 +1,18 @@
+TODO:
+-Somehow display rectangles over the cells to signify shifts
+-Cursor pop-up modal for hovering over certain things like shift blocks
+
+-Getting calendar to display people with shifts
+
+Resources:
+
+Modal pop up:
+https://www.w3schools.com/howto/howto_css_modals.asp
+
+For the bottom stats:
+https://www.w3schools.com/howto/howto_css_skill_bar.asp
+
+Questions:
+What should have a modal pop-up?
+Should employees have their own pages? Maybe at first.
+Should we switch to the new Date in Java SE8?

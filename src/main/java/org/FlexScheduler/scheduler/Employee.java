@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 public class Employee implements Comparable<Employee>{
-	
+
 	private String name;
+	//TODO: private String firstName and lastName
 	private double minHours = 0;
 	private double maxHours = 20;
 	
@@ -30,6 +30,16 @@ public class Employee implements Comparable<Employee>{
 	 * @param minH	Minimum hours employee should be scheduled for (greater than or equal to 0)
 	 * @param maxH	Maximum hours employee should be scheduled for (must not exceed default of 20)
 	 */
+	
+	protected Employee() {}
+	
+	public Employee(String s) {
+		name = s;
+		shifts = new ArrayList<Shift>();
+		unavailTimes = new ArrayList<Shift>();
+		avoidedTimes = new ArrayList<Shift>();
+	}
+	
 	public Employee(String s, int minH, int maxH) {
 		name = s;
 		minHours = minH;
@@ -275,6 +285,7 @@ public class Employee implements Comparable<Employee>{
 	/**
 	 * Returns the employee's name
 	 */
+	@Override
 	public String toString() {
 		return name;
 	}

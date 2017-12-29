@@ -1,18 +1,38 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<title>Index</title>
+<title>Flex Scheduler</title>
+<link rel="stylesheet" href="../../../css/homelayout.css"
+	th:href="@{/css/homelayout.css}" type="text/css" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
-	<p
-		th:text="'Hello, ' + ${name} + '. Welcome to an unfinished web application'" />
-	<a href="/doc/index.html">Calendar Documentation</a>
-	<table style="border: 1px solid black">
-		<th th:attr="colspan=${cal.getWeek().size()}" th:text="${cal.getName()}" />
+	<div id="emp_container">
+		<span th:each="emp : ${emps}" th:text="${emp.getName()}"> </span>
+		<span th:onclick="'alert(\'Add a new employee\');'"><a href="#">[+]</a></span>
+	</div>
+	<table id="cal_container">
+		<!-- Calendar header -->
 		<tr>
-			<td th:each="day : ${cal.getWeek()}" th:text="${day.toString()}" />
+			<th th:attr="colspan=${cal.getWeek().size() + 1}"
+				th:text="${cal.getName()}" />
+		</tr>
+		<!-- Displaying each day -->
+		<tr>
+			<td id="empty"></td>
+			<th th:each="day : ${cal.getWeek()}" th:text="${day.toString()}" />
+		</tr>
+		<!-- Displaying each time slot -->
+		<tr th:each="slot : ${timeslots}" th:attr="id=${slot}">
+			<td th:text="${slot}" />
+			<td th:each="day : ${cal.getWeek()}"
+				th:onclick="'alert(\'' + ${day} + ', ' + ${slot} + '\');'" />
 		</tr>
 	</table>
+	<div id="stats_container">
+		<p>Graphical display of the calendar's and employee stats go down
+			here.</p>
+		<a href="/doc/index.html">Calendar Documentation</a>
+	</div>
 </body>
 </html>
