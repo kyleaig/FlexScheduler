@@ -1,9 +1,71 @@
-<html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-	<title>Index</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flex Scheduler</title>
+<script src="../../../script/homescript.js" type="text/javascript"
+	th:src="@{/script/homescript.js}"></script>
+<link rel="stylesheet" href="../../../css/homelayout.css"
+	th:href="@{/css/homelayout.css}" type="text/css" />
 </head>
 <body>
-	<p>Welcome to an unfinished web application</p>
-	<a href="/doc/index.html">Calendar Documentation</a>
+	<!-- The Modal -->
+	<div id="newEmpModal" class="modal">
+
+		<!-- Modal Content -->
+		<div class="modal-content">
+			<span class="close">&times;</span>
+			<form method="post">
+				<table id="newEmpForm">
+					<tr>
+						<th colspan="2">Add a new employee</th>
+					</tr>
+					<tr>
+						<td>Name:</td>
+						<td><input type="text" name="newEmpName" /></td>
+					</tr>
+					<tr>
+						<td colspan="2" style="text-align: center"><input
+							type="submit" value="Add" /></td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	</div>
+	<div id="emp_container">
+		<span th:each="emp : ${emps}" th:text="${emp.getName()}"> </span> <span
+			id="newEmpBtn"> <a href="#">[+]</a>
+		</span>
+	</div>
+	<div th:if="${cal != null}" th:attr="id=${calId}" class="cal_container">
+		<!-- Calendar header -->
+		<div id="cal_header">
+			<h1 th:text="${cal.getName()}"></h1>
+		</div>
+		<!-- First column -->
+		<div class="first_col">
+			<span id="empty" class="timeSlot"></span>
+			<!--phase this out -->
+			<span class="timeSlot"
+				style="text-align: right; padding-right: 5px;"
+				th:each="slot : ${timeslots}" th:text="${slot}" th:attr="id=${slot}"></span>
+		</div>
+		<div th:each="day : ${cal.getWeek()}" class="day_col"
+			th:attr="id=${day.toString()}">
+			<!-- Displaying each day -->
+			<div class="weekdays" th:text="${day.toString()}"></div>
+			<!-- The drawing slots -->
+			<span class="timeSlot" th:each="slot : ${timeslots}"
+				th:attr="id=${slot}"></span>
+		</div>
+	</div>
+	<div th:unless="${cal != null}" style="text-align: center">No
+		calendars... :(</div>
+	<div id="stats_container">
+		<p>Graphical display of the calendar's and employee stats go down
+			here.</p>
+		<a href="/doc/index.html">Calendar Documentation</a>
+	</div>
 </body>
 </html>

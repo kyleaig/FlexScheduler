@@ -3,14 +3,32 @@ package org.FlexScheduler.scheduler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+@Entity
+@NamedQuery(query = "select c from Calendar c", name = "query_find_all_calendars")
+@Table(name = "cal")
 public class Calendar {
+	
+	private Long id;
 	
 	public static final char DAYS[] = {'M', 'T', 'W', 'R', 'F', 'S', 'U'};
 	
-	public ArrayList<Day> week = new ArrayList<Day>();
+	private List<Day> week = new ArrayList<Day>();
 	
 	private String name = "Calendar";
+	
+	protected Calendar() {}
 	
 	/**
 	 * Creates a new Calendar object
@@ -23,6 +41,10 @@ public class Calendar {
 		} else {
 			week.addAll(Arrays.asList(new Day('M', i), new Day('T', i), new Day('W', i), new Day('R', i),
 					new Day('F', i)));
+		}
+		
+		for (Day day : week) {
+			day.setCal(this);
 		}
 		if (i == 0)
 			setName("MLC Calendar");
@@ -52,6 +74,20 @@ public class Calendar {
 	}
 	
 	/**
+	 * Returns the Calendar's ID
+	 * @return	The Calendar's ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
+	/**
 	 * Sets the name of the Calendar
 	 * @param s	The string which to assign to the Calendar's name
 	 */
@@ -77,8 +113,13 @@ public class Calendar {
 	 * Returns the Calendar's work week
 	 * @return	An ArrayList of Days in the Calendar's work week
 	 */
-	public ArrayList<Day> getWeek() {
+	@OneToMany(cascade = CascadeType.ALL, mappedBy="cal")
+	public List<Day> getWeek() {
 		return week;
+	}
+	
+	public void setWeek(List<Day> week) {
+		this.week = week;
 	}
 	
 	/**
@@ -100,9 +141,9 @@ public class Calendar {
 		}
 
 		for (Day d : week) {
-			ArrayList<Shift> shifts = d.getShifts();
+			Set<Shift> shifts = d.getShifts();
 			for (Shift s : shifts) {
-				if (!s.isCovered())
+				if (!s.atCapacity())
 					uncoveredShifts++;
 			}
 			totalShifts += shifts.size();
