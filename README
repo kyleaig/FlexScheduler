@@ -11,8 +11,23 @@ https://www.w3schools.com/howto/howto_css_modals.asp
 
 For the bottom stats:
 https://www.w3schools.com/howto/howto_css_skill_bar.asp
+https://www.w3schools.com/howto/howto_js_rangeslider.asp
+
+Data:
+https://spring.io/blog/2011/02/10/getting-started-with-spring-data-jpa
+
+Forms:
+https://www.w3schools.com/html/html_forms.asp
+https://www.w3schools.com/tags/ref_httpmethods.asp
+https://spring.io/guides/gs/handling-form-submission/
+
+Layout:
+https://www.w3schools.com/css/css_rwd_grid.asp
+https://www.w3schools.com/howto/howto_css_calendar.asp
 
 Questions:
 What should have a modal pop-up?
 Should employees have their own pages? Maybe at first.
 Should we switch to the new Date in Java SE8?
+
+ctrl + z support: https://stackoverflow.com/questions/16006583/capturing-ctrlz-key-combination-in-javascript

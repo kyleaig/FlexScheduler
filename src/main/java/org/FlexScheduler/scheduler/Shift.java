@@ -3,24 +3,42 @@ package org.FlexScheduler.scheduler;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
+
+@Entity
+@NamedQuery(query = "select s from Shift s", name = "query_find_all_shifts")
 public class Shift {
+
+	private Long id;
 	
+	private Day day;
 	private char dow;
 	private Date startTime;
 	private Date endTime;
-	private Employee eOne = null;
-	private Employee eTwo = null;
 	
-	private int location; // MLC = 0, SLC = 1, HSC = 2
+	private Set<Employee> emps = new HashSet<Employee>();
+	
+	private int loc; // MLC = 0, SLC = 1, HSC = 2
 	private final String[] LOCS = {"MLC", "SLC", "HSC"};
 	
 	private double length;
 	
 	DateFormat formatter = new SimpleDateFormat("hh:mm a");
+
+	private int capacity = 2;
+	
+	protected Shift() {}
 	
 	/**
 	 * Creates a new Shift
@@ -30,7 +48,7 @@ public class Shift {
 	 * @param e	The shift's end time "hh:mm a"
 	 */
 	public Shift(char d, int loc, String s, String e) {
-		location = loc;
+		this.loc = loc;
 		dow = d;
 		try {
 			startTime = formatter.parse(s);
@@ -49,10 +67,22 @@ public class Shift {
 		dow = s.getDow();
 		startTime = s.getStart();
 		endTime = s.getEnd();
-		eOne = s.getEmployees(0);
-		eTwo = s.getEmployees(1);
+		Set<Employee> set = s.getEmps();
+		for (Employee e : set) {
+			emps.add(e);
+		}
 		
-		location = s.getLoc();
+		this.loc = s.getLoc();
+	}
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
 	}
 	
 	/**
@@ -83,6 +113,15 @@ public class Shift {
 			return false;
 	}
 	
+	@ManyToOne(cascade = CascadeType.ALL)
+	public Day getDay() {
+		return day;
+	}
+	
+	public void setDay(Day day) {
+		this.day = day;
+	}
+	
 	/**
 	 * Returns the start and end times of the shift, the day of the week, the employees working it,
 	 * and the location
@@ -93,8 +132,10 @@ public class Shift {
 		end = formatter.format(endTime);
 		str += "Time: " + start + " - " + end;
 		str += " (" + dow + ")";
-		str += ": " + (eOne != null ? eOne : "")  + (eTwo != null ? ", " + eTwo : "") 
-				+ " (" + (0 <= location && location <= LOCS.length ? LOCS[location] : "Anywhere") + ")";
+		for (Employee e : emps) {
+			str+= e + ", ";
+		}
+		str += " (" + (0 <= loc && loc <= LOCS.length ? LOCS[loc] : "Anywhere") + ")";
 		return str;
 	}
 	
@@ -103,12 +144,9 @@ public class Shift {
 	 * @param e	The employee to be assigned to the shift
 	 * @return	True if the assignment was successful, false otherwise
 	 */
-	public boolean addEmployee(Employee e) {		
-		if (eOne == null) {
-			eOne = e;
-			return true;
-		} else if (eTwo == null && (dow != 'S' && dow != 'U')) {
-			eTwo = e;
+	public boolean addEmployee(Employee e) {
+		if (emps.size() < capacity) {
+			emps.add(e);
 			return true;
 		}
 		return false;
@@ -118,14 +156,16 @@ public class Shift {
 	 * Replaces the Shift's employees with a new list of employees
 	 * @param list	The new list of employees to be assigned to the shift
 	 */
-	public void replaceEmps(List<Employee> list) {
-		if (list.size() == 1) {
-			eOne = list.get(0);
-			eTwo = null;
-		} else {
-			eOne = list.get(0);
-			eTwo = list.get(1);
-		}
+	public void replaceEmps(Set<Employee> set) {
+		emps = set;
+	}
+	
+	public void setCap(int c) {
+		capacity = c;
+	}
+	
+	public int getCap() {
+		return capacity;
 	}
 	
 	/**
@@ -134,76 +174,25 @@ public class Shift {
 	 * and SLC daytime and MLC need two people at all times.
 	 * @return
 	 */
-	public boolean isCovered() {
-		boolean opening = false;
-		try {
-			opening = startTime.before(formatter.parse(dow == 'T' || dow == 'R' ? "11:00 am" : "10:10 am"));
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		
-		if (location == 1 && opening) 		// SLC needs one person to open
-			return eOne != null;
-		else if (location == 2)				// HSC only needs one person
-			return eOne != null;
-		else								// SLC daytime and MLC need two people
-			return eOne != null && eTwo != null;
+	public boolean atCapacity() {
+		if (emps.size() == capacity)
+			return true;
+		return false;
 	}
 	
 	/**
-	 * Returns whether the Shift is an opening shift
-	 * @return	True if the Shift is an opening shift, false otherwise
+	 * Returns a Set of the Employees working this Shift
+	 * @return	A Set of the Employees working this Shift
 	 */
-	public boolean isOpening() {
-		try {
-			return startTime.equals(formatter.parse("7:30 am"));
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return false;
-		}
+	@ManyToMany(cascade = CascadeType.ALL)
+	public Set<Employee> getEmps() {
+		return emps;
 	}
 	
-	/**
-	 * Returns whether the Shift is a closing shift
-	 * @return	True if the Shift is a closing shift, false otherwise
-	 */
-	public boolean isClosing() {
-		try {
-			return startTime.equals(formatter.parse("5:00 pm"));
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return false;
-		}
+	public void setEmps(Set<Employee> emps) {
+		this.emps = emps;
 	}
-	
-	/**
-	 * Returns an ArrayList of the Employees working this Shift
-	 * @return	An ArrayList of the Employees working this Shift
-	 */
-	public ArrayList<Employee> getEmployees() {
-		ArrayList<Employee> list = new ArrayList<Employee>();
-		if(eOne != null) {
-			list.add(eOne);
-		}
-		if (eTwo != null) {
-			list.add(eTwo);
-		}
-		return list;
-	}
-	
-	/**
-	 * Returns the Employee at the specified index in the Shift's ArrayList<Employee>
-	 * @param i	The index in the ArrayList<Employee>
-	 * @return	The Employee at index i of the Shift's ArrayList<Employee>
-	 */
-	public Employee getEmployees(int i) {
-		if (i == 0)
-			return eOne;
-		else if (i == 1)
-			return eTwo;
-		else
-			return null;
-	}
+
 	/**
 	 * Returns the length in hours of the Shift
 	 * @return	The length in hours of the Shift
@@ -211,6 +200,10 @@ public class Shift {
 	public double getLength() {
 		calcLength();
 		return length;
+	}
+	
+	public void setLength(double length) {
+		this.length = length;
 	}
 	
 	/**
@@ -241,12 +234,20 @@ public class Shift {
 		return dow;
 	}
 	
+	public void setDow(char dow) {
+		this.dow = dow;
+	}
+	
 	/**
 	 * Returns the Shift's location
 	 * @return	The int denoting the Shift's location
 	 */
 	public int getLoc() {
-		return location;
+		return loc;
+	}
+	
+	public void setLoc(int loc) {
+		this.loc = loc;
 	}
 	
 	/**
@@ -275,7 +276,7 @@ public class Shift {
 	public boolean overlapsShift(Shift s) {
 		if (s.getDow() == dow || s.getDow() == 'Z') {
 			// startA <= startB && endA >= endB
-			if (startTime.getTime() <= s.getEnd().getTime() && endTime.getTime() >= s.getStart().getTime() && location == s.getLoc())
+			if (startTime.getTime() <= s.getEnd().getTime() && endTime.getTime() >= s.getStart().getTime() && loc == s.getLoc())
 				return true;
 		}
 		return false;
@@ -283,12 +284,12 @@ public class Shift {
 	
 	/**
 	 * Returns whether or not the Shift overlaps with any Shift in an ArrayList of Shifts
-	 * @param arr	The ArrayList of Shifts in question
+	 * @param list	The ArrayList of Shifts in question
 	 * @return	Returns true if the Shift overlaps with any of the Shifts in the ArrayList, false
 	 * if otherwise
 	 */
-	public boolean overlapsShift(ArrayList<Shift> arr) {
-		for (Shift s : arr) {
+	public boolean overlapsShift(Set<Shift> list) {
+		for (Shift s : list) {
 			if (overlapsShift(s))
 				return true;
 		}

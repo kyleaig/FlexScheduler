@@ -2,13 +2,32 @@ package org.FlexScheduler.scheduler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
+@Entity
+@NamedQuery(query = "select d from Day d", name = "query_find_all_days")
+@Table(name = "day")
 public class Day implements Comparable<Day> {
+
+	private Long id;
 	
+	private Calendar cal;
 	private char dow;
 	
-	ArrayList<Shift> shifts = new ArrayList<Shift>();
+	private Set<Shift> shifts = new HashSet<Shift>();
+	
+	protected Day() {}
 	
 	/**
 	 * Creates a new Day object
@@ -53,6 +72,10 @@ public class Day implements Comparable<Day> {
 			shifts.add(new Shift(d, loc, "11:00 am", "3:00 pm"));
 			shifts.add(new Shift(d, loc, "2:00 pm", "7:30 pm"));
 		}
+		// Setting the One in the OneToMany relationship
+		for (Shift s : shifts) {
+			s.setDay(this);
+		}
 	}
 	
 	/**
@@ -61,21 +84,32 @@ public class Day implements Comparable<Day> {
 	 */
 	public Day(Day d) {
 		dow = d.getDow();
-		ArrayList<Shift> copyShifts = d.getShifts();
+		Set<Shift> copyShifts = d.getShifts();
 		for (Shift s : copyShifts) {
 			shifts.add(new Shift(s));
 		}
 	}
 	
-	public Shift getShift(int i) {
-		return shifts.get(i);
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
+	public void setShifts(Set<Shift> set) {
+		shifts = set;
 	}
 	
 	/**
 	 * Returns an ArrayList of the shifts in the Day
 	 * @return	An ArrayList of the Day's shifts
 	 */
-	public ArrayList<Shift> getShifts() {
+	@OneToMany(cascade = CascadeType.ALL, mappedBy="day")
+	public Set<Shift> getShifts() {
 		return shifts;
 	}
 	
@@ -87,6 +121,22 @@ public class Day implements Comparable<Day> {
 		return dow;
 	}
 	
+	public void setDow(char d) {
+		dow = d;
+	}
+	
+	/**
+	 * Returns the Calendar associated to this Day
+	 * @return	The Calendar associated with this Day
+	 */
+	@ManyToOne(cascade = CascadeType.ALL)
+	public Calendar getCal() {
+		return cal;
+	}
+	
+	public void setCal(Calendar cal) {
+		this.cal = cal;
+	}
 	/**
 	 * Returns the full string of the day of the week
 	 */
@@ -107,18 +157,6 @@ public class Day implements Comparable<Day> {
 		else
 			str = "Sunday";
 		return str;
-	}
-	
-	/**
-	 * Returns whether or not the Day is covered
-	 * @return	True if the Day is covered, false if not
-	 */
-	public boolean isFull() {
-		for (Shift s : shifts) {
-			if (!s.isCovered())
-				return false;
-		}
-		return true;
 	}
 
 	@Override

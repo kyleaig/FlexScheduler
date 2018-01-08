@@ -1,14 +1,31 @@
 package org.FlexScheduler.scheduler;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+@Entity
+@NamedQuery(query = "select e from Employee e", name = "query_find_all_employees")
+@Table(name = "employee")
 public class Employee implements Comparable<Employee>{
 
+	private Long id;
+	
 	private String name;
 	//TODO: private String firstName and lastName
 	private double minHours = 0;
+
 	private double maxHours = 20;
 	
 	private double maxHoursDay = 5.5;
@@ -17,12 +34,12 @@ public class Employee implements Comparable<Employee>{
 	private double sHours = 20;
 	private double mHours = 20;
 	
-	ArrayList<Integer> locBan = new ArrayList<Integer>();
+	private Set<Shift> unavailTimes;
+	private Set<Shift> avoidedTimes;
 	
-	private ArrayList<Shift> unavailTimes;
-	private ArrayList<Shift> avoidedTimes;
-	
-	private ArrayList<Shift> shifts;
+	private Set<Shift> shifts;
+
+	private double currHours;
 	
 	/**
 	 * Creates an employee
@@ -35,9 +52,9 @@ public class Employee implements Comparable<Employee>{
 	
 	public Employee(String s) {
 		name = s;
-		shifts = new ArrayList<Shift>();
-		unavailTimes = new ArrayList<Shift>();
-		avoidedTimes = new ArrayList<Shift>();
+		shifts = new HashSet<Shift>();
+		unavailTimes = new HashSet<Shift>();
+		avoidedTimes = new HashSet<Shift>();
 	}
 	
 	public Employee(String s, int minH, int maxH) {
@@ -47,10 +64,11 @@ public class Employee implements Comparable<Employee>{
 		if (maxHours >= 20)
 			maxHours = 20;
 		sHours = 20;
-		shifts = new ArrayList<Shift>();
-		unavailTimes = new ArrayList<Shift>();
-		avoidedTimes = new ArrayList<Shift>();
+		shifts = new HashSet<Shift>();
+		unavailTimes = new HashSet<Shift>();
+		avoidedTimes = new HashSet<Shift>();
 	}
+	
 	
 	/**
 	 * Returns the name of the employee
@@ -58,6 +76,32 @@ public class Employee implements Comparable<Employee>{
 	 */
 	public String getName() {
 		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	/**
+	 * Returns the Employee's ID
+	 * @return	The Employee's ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setMinHours(double minHours) {
+		this.minHours = minHours;
+	}
+
+	public void setShifts(Set<Shift> shifts) {
+		this.shifts = shifts;
 	}
 
 	/**
@@ -71,11 +115,11 @@ public class Employee implements Comparable<Employee>{
 			if (newS.getStart().equals(sh.getEnd()) && sh.getDow() == newS.getDow()) {
 				sh.setEnd(newS.getEnd());
 				consolidated = true;
-				sh.replaceEmps(Arrays.asList(this));
+				sh.replaceEmps(Collections.singleton(this)); // Because now only this employee has that consolidated shift
 			} else if (newS.getEnd().equals(sh.getStart()) && sh.getDow() == newS.getDow()) {
 				sh.setStart(newS.getStart());
 				consolidated = true;
-				sh.replaceEmps(Arrays.asList(this));
+				sh.replaceEmps(Collections.singleton(this));
 			}
 		}
 		if (!consolidated)
@@ -84,6 +128,7 @@ public class Employee implements Comparable<Employee>{
 			sHours -= newS.getLength();
 		else if (newS.getLoc() == 0)
 			mHours -= newS.getLength();
+		currHours += s.getLength();
 		addUnavail(newS);
 	}
 	/**
@@ -144,8 +189,13 @@ public class Employee implements Comparable<Employee>{
 	 * Returns an ArrayList of the employee's avoided times
 	 * @return	An ArrayList of avoided times
 	 */
-	public ArrayList<Shift> getAvoidedTimes() {
+	@OneToMany(cascade = CascadeType.ALL, mappedBy="emps")
+	public Set<Shift> getAvoidedTimes() {
 		return avoidedTimes;
+	}
+	
+	public void setAvoidedTimes(Set<Shift> avoidedTimes) {
+		this.avoidedTimes = avoidedTimes;
 	}
 	
 	/**
@@ -153,11 +203,11 @@ public class Employee implements Comparable<Employee>{
 	 * @return	The employee's current hour count
 	 */
 	public double getCurrHours() {
-		double total = 0.0;
-		for (Shift s : shifts) {
-			total += s.getLength();
-		}
-		return total;
+		return currHours;
+	}
+	
+	public void setCurrHours(double currHours) {
+		this.currHours = currHours;
 	}
 	
 	/**
@@ -196,6 +246,7 @@ public class Employee implements Comparable<Employee>{
 	public double getMinHours() {
 		return minHours;
 	}
+
 	/**
 	 * Returns the minimum total hours an employee can work in one day
 	 * @param d	Any char d will return the same min hours of a single day
@@ -225,7 +276,8 @@ public class Employee implements Comparable<Employee>{
 	 * Returns the employee's ArrayList of Shifts 
 	 * @return	An ArrayList of the employee's shifts
 	 */
-	public ArrayList<Shift> getShifts() {
+	@ManyToMany
+	public Set<Shift> getShifts() {
 		return shifts;
 	}
 	
@@ -262,20 +314,24 @@ public class Employee implements Comparable<Employee>{
 	}
 	
 	/**
-	 * Returns the ArrayList of shifts denoting the employee's unavailable time frames
-	 * @return	An ArrayList of shifts denoting the employee's unavailable time frames
+	 * Returns the Set of shifts denoting the employee's unavailable time frames
+	 * @return	An Set of shifts denoting the employee's unavailable time frames
 	 */
-	public ArrayList<Shift> getUnavail() {
+	@OneToMany(cascade = CascadeType.ALL, mappedBy="emps")
+	public Set<Shift> getUnavailTimes() {
 		return unavailTimes;
 	}
-	
+
+	public void setUnavailTimes(Set<Shift> unavailTimes) {
+		this.unavailTimes = unavailTimes;
+	}
 	/**
 	 * Returns whether or not the employee is unavailable during a specified shift or time frame
 	 * @param s	The specified shift or time frame in question
 	 * @return
 	 */
 	public boolean isUnavailable(Shift s) {
-		for (Shift u : getUnavail()) {
+		for (Shift u : getUnavailTimes()) {
 			if (s.overlapsClass(u) || s.overlapsShift(u)) // They can make it to class but wb a shift?
 				return true;
 		}
@@ -305,20 +361,6 @@ public class Employee implements Comparable<Employee>{
 	 */
 	public void setMaxShiftsPerDay(int n) {
 		maxShiftsPerDay = n;
-	}
-
-	public void setLB(List<Integer> list) {
-		for(Integer n : list) {
-			locBan.add(new Integer(n));
-		}
-	}
-	
-	public List<Integer> getLB() {
-		return locBan;
-	}
-	
-	public void setLB(int n) {
-		locBan.add(n);
 	}
 	
 	public void setSHours(double h) {
@@ -353,7 +395,7 @@ public class Employee implements Comparable<Employee>{
 	 * @return	True if the employee is working the shift, false otherwise
 	 */
 	public boolean isWorking(Shift s) {
-		ArrayList<Employee> emps = s.getEmployees();
+		Set<Employee> emps = s.getEmps();
 		for (Employee e : emps) {
 			if (e.getName().equals(name))
 				return true;
